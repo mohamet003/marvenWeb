@@ -17,7 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import simplejdbc.CustomerEntity;
 import simplejdbc.DAO;
+import simplejdbc.DAOException;
 import simplejdbc.DataSourceFactory;
+import sun.print.PrinterJobWrapper;
 
 /**
  *
@@ -25,6 +27,19 @@ import simplejdbc.DataSourceFactory;
  */
 @WebServlet(name = "NewServlet1", urlPatterns = {"/NewServlet1"})
 public class NewServlet1 extends HttpServlet {
+    
+        List<String> lstats;
+        DAO dao = new DAO(DataSourceFactory.getDataSource());
+        
+        List<CustomerEntity> lcustomer;
+
+    public NewServlet1() throws DAOException {
+        
+        this.lstats = dao.States();
+        String st = lstats.get(0);
+        this.lcustomer = dao.customersInState(st);
+    }
+        
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -47,40 +62,27 @@ public class NewServlet1 extends HttpServlet {
             out.println("</head>");
             out.println("<body>");
             try {   // Trouver la valeur du paramètre HTTP customerID
-                String val = request.getParameter("state");
-                if (val == null) {
-                    throw new Exception("La paramètre state n'a pas été transmis");
-                }
-                // on doit convertir cette valeur en entier (attention aux exceptions !)
-                String st = (val);
- 
-                DAO dao = new DAO(DataSourceFactory.getDataSource());
-                List<CustomerEntity> lcustomer = dao.customersInState(st);
-                List<String> lstats= dao.States();
-                //System.out.println("ddd "+lstats);
-                if (lcustomer == null) {
-                    throw new Exception("Client inconnu");
-                }
-                
 
-                          
-
-
-    out.println("<form action='NewServelet1'> \n"  +
-"  <div class=\"form-group\">\n" +
-                        
-"    <label for=\"exampleFormControlSelect1\">Liste des états</label>\n" +
-"    <select class=\"form-control\" id=\"exampleFormControlSelect1\">\n");
+    out.println("<div class=\"container\" style='margin-top:10vw'>"
+            + "<div class='row' >"
+             + "<div class='col' >"
+            + "<form method='get'> \n" +
+"    <select class=\"form-control\" name='statt'>\n");
                 
         for (String stat : lstats) {
-                out.println("  <option>"+stat+"</option>"    );    
+                out.println("  <option value='"+stat+"'>"+stat+"</option>"    );    
                 }       
-  out.println("    </select>\n" +
-"  </div>");
-    out.println("</form>");
+  out.println("</select>"
++ "<button type='submit' class=\"btn btn-success\" style='margin-top:2vw'>Success</button>");
+ out.println("</form>"
+ + "  </div>");
+  
+  
+    
            
          
- out.println("<table style=\"width:100%\" class=\"table\">\n" +
+ out.println("<div class='col'>"
+         + "<table class='table'>\n" +
 "  <tr>\n" +
 "    <th>ID</th>\n" +
 "    <th>Name</th>\n" +
@@ -88,16 +90,18 @@ public class NewServlet1 extends HttpServlet {
 "  </tr>");
                 // Afficher les propriétés du client  
            for (CustomerEntity customerEntity : lcustomer) {
-                                                out.println("  < <tr>\n" +
+               
+  out.println("<tr>\n" +
 "    <td>"+customerEntity.getCustomerId()+"</td>\n" +
 "    <td>"+customerEntity.getName()+"</td>\n" +
 "    <td>"+customerEntity.getAddressLine1()+"</td>\n" +
 "  </tr>");
                 }
-
-                
-                             out.println(" " +
-"</table>");
+out.println(" " +
+"</table>"
+        + "</div>"
+  + "</div>"
++ "</div>");
             } catch (Exception e) {
                 out.printf("Erreur : %s", e.getMessage());
             }
@@ -126,6 +130,12 @@ public class NewServlet1 extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String st = request.getParameter("statt");
+            try {
+                this.lcustomer = dao.customersInState(st);
+            } catch (DAOException ex) {
+                Logger.getLogger(NewServlet1.class.getName()).log(Level.SEVERE, null, ex);
+            }
         processRequest(request, response);
     }
 
