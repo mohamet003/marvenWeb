@@ -19,25 +19,22 @@ import simplejdbc.CustomerEntity;
 import simplejdbc.DAO;
 import simplejdbc.DAOException;
 import simplejdbc.DataSourceFactory;
-import sun.print.PrinterJobWrapper;
 
 /**
  *
- * @author mkone03
+ * @author Mohamet Kone
  */
-@WebServlet(name = "NewServlet1", urlPatterns = {"/NewServlet1"})
-public class NewServlet1 extends HttpServlet {
+@WebServlet(name = "CustomerByState", urlPatterns = {"/CustomerByState"})
+public class CustomerByState extends HttpServlet {
+
+       
     
-        List<String> lstats;
         DAO dao = new DAO(DataSourceFactory.getDataSource());
         
         List<CustomerEntity> lcustomer;
 
-    public NewServlet1() throws DAOException {
-        
-        this.lstats = dao.States();
-        String st = lstats.get(0);
-        this.lcustomer = dao.customersInState(st);
+    public CustomerByState() {
+       
     }
         
 
@@ -51,7 +48,20 @@ public class NewServlet1 extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException, Exception {
+        
+                String val = request.getParameter("state");
+                if (val == null) {
+                    throw new Exception("La paramètre State n'a pas été transmis");
+                }
+ 
+                DAO dao = new DAO(DataSourceFactory.getDataSource());
+                lcustomer = dao.customersInState(val);
+                if (lcustomer == null) {
+                    throw new Exception("State inconnu");
+                }
+                
+                
       response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
@@ -64,23 +74,8 @@ public class NewServlet1 extends HttpServlet {
             try {   // Trouver la valeur du paramètre HTTP customerID
 
     out.println("<div class=\"container\" style='margin-top:10vw'>"
-            + "<div class='row' >"
-             + "<div class='col' >"
-            + "<form method='get'> \n" +
-"    <select class=\"form-control\" name='statt'>\n");
-                
-        for (String stat : lstats) {
-                out.println("  <option value='"+stat+"'>"+stat+"</option>"    );    
-                }       
-  out.println("</select>"
-+ "<button type='submit' class=\"btn btn-success\" style='margin-top:2vw'>Success</button>");
- out.println("</form>"
- + "  </div>");
-  
-  
-    
-           
-         
+            + "<h3>List of customer (s) who lives in "+val+"  </h3>"
+            + "<div class='row' >");        
  out.println("<div class='col'>"
          + "<table class='table'>\n" +
 "  <tr>\n" +
@@ -101,13 +96,13 @@ out.println(" " +
 "</table>"
         + "</div>"
   + "</div>"
-+ "</div>");
+  + " <form action='States'>"
++ "<button type='submit' class=\"btn btn-info\" style='margin-top:2vw'>Retour</button> "
+ + "</form>"
+        + "</div>");
             } catch (Exception e) {
                 out.printf("Erreur : %s", e.getMessage());
             }
-            
-
-            out.printf("<hr><a href='%s'>Retour au menu</a>", request.getContextPath());
             out.println("</body>");
             out.println("<script src=\"https://code.jquery.com/jquery-3.3.1.slim.min.js\" integrity=\"sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo\" crossorigin=\"anonymous\"></script>\n" +
 "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js\" integrity=\"sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut\" crossorigin=\"anonymous\"></script>\n" +
@@ -130,13 +125,13 @@ out.println(" " +
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String st = request.getParameter("statt");
+     
             try {
-                this.lcustomer = dao.customersInState(st);
-            } catch (DAOException ex) {
-                Logger.getLogger(NewServlet1.class.getName()).log(Level.SEVERE, null, ex);
+                processRequest(request, response);
+            } catch (Exception ex) {
+                Logger.getLogger(CustomerByState.class.getName()).log(Level.SEVERE, null, ex);
             }
-        processRequest(request, response);
+            
     }
 
     /**
@@ -150,7 +145,11 @@ out.println(" " +
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+            try {
+                processRequest(request, response);
+            } catch (Exception ex) {
+                Logger.getLogger(CustomerByState.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
 
     /**
